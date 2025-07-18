@@ -25,6 +25,9 @@ const SELECTORS = {
     // Các icon của nền tảng (Facebook, Instagram,...)
     platformIcons: 'div.xtwfq29',
 
+    // caption của quảng cáo (nếu có)
+    caption: 'div[style*="white-space: pre-wrap"] > span',
+
     // Thẻ video hoặc image chính
     adVideo: 'video',
     adImage: 'img[referrerpolicy="origin-when-cross-origin"]'
@@ -81,8 +84,10 @@ function getPlatforms(container) {
     icons.forEach(icon => {
         const style = icon.style.getPropertyValue('mask-image') || icon.style.getPropertyValue('background-image');
         if (style.includes('TP7nCDju1B-.png')) platforms.push('Facebook'); // Ví dụ
-        if (style.includes('uEEsYaclltR.png')) platforms.push('Instagram'); // Ví dụ
+        if (style.includes('SfkOtt7be68.png')) platforms.push('Instagram'); // Ví dụ
         if (style.includes('r35dp7ubbrO.png')) platforms.push('Messenger'); // Ví dụ
+        if (style.includes('TP7nCDju1B-.png')) platforms.push('Threads');
+        if (style.includes('r35dp7ubbrO.png')) platforms.push('Audience Network');
     });
     return [...new Set(platforms)];
 }
@@ -107,10 +112,11 @@ function extractAdData(container) {
     const { status, startDate, timeRunning } = getStatusAndDates(container);
 
     // Lấy URL hình ảnh/video
-    const adImageElement = container.querySelector(SELECTORS.adImage);
-    const adVideoElement = container.querySelector(SELECTORS.adVideo);
-    const imageUrl = adImageElement ? adImageElement.src : null;
-    const videoUrl = adVideoElement ? adVideoElement.src : null;
+    const adImageElements = container.querySelectorAll(SELECTORS.adImage);
+    const adVideoElements = container.querySelectorAll(SELECTORS.adVideo);
+
+    const imageUrls = Array.from(adImageElements).map(img => img.src);
+    const videoUrls = Array.from(adVideoElements).map(video => video.src);
 
     // Lấy HTML thô của container quảng cáo
     const rawHtml = container.outerHTML;
@@ -125,9 +131,10 @@ function extractAdData(container) {
         aspect_ratio: getAspectRatio(container),
         ad_id: (container.innerHTML.match(/ID thư viện: (\d+)/) || [])[1] || null,
         // Thêm các trường mới
-        image_url: imageUrl,
-        video_url: videoUrl,
-        raw_html: rawHtml
+        image_url: imageUrls,
+        video_url: videoUrls,
+        raw_html: rawHtml,
+        caption: container.querySelector(SELECTORS.caption)?.innerText.trim() || null
     };
 }
 
@@ -160,7 +167,7 @@ function createSaveButton(adContainer) {
     };
 
     button.addEventListener('click', async () => {
-        button.innerText = 'Đang lưu...';
+        button.innerText = 'Saving...';
         button.disabled = true;
         button.style.backgroundColor = '#e7f3ff'; // Đổi màu khi đang lưu
         button.style.color = '#1877f2';
@@ -176,13 +183,13 @@ function createSaveButton(adContainer) {
                 },
                 body: JSON.stringify(adData),
             });
-            button.innerText = 'Đã lưu!';
+            button.innerText = 'Saved!';
             button.style.backgroundColor = '#dff0d8';
             button.style.color = '#3c763d';
             button.disabled = true;
         } catch (error) {
             console.error('Lỗi khi gửi đến n8n:', error);
-            button.innerText = 'Lỗi! Thử lại';
+            button.innerText = 'Error! Try Again';
             button.disabled = false;
             // Trả lại style ban đầu khi có lỗi
             button.style.backgroundColor = '#f0f2f5';
