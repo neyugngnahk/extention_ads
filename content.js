@@ -206,7 +206,15 @@ function findTargetButtonContainer(container) {
     const allSpans = container.querySelectorAll('span');
     for (const span of allSpans) {
         const text = span.innerText;
-        if ((text.includes('Xem chi tiết quảng cáo') || text.includes('Xem chi tiết bản tóm tắt')) && text.length < 50) {
+        if (
+            (
+                text.includes('Xem chi tiết quảng cáo') ||
+                text.includes('Xem chi tiết bản tóm tắt') ||
+                text.includes('See ad details') ||
+                text.includes('See summary details')
+            )
+            && text.length < 50
+        ) {
             // Trả về thẻ DIV cha chứa nút này, là nơi lý tưởng để thêm nút của chúng ta
             const buttonWrapper = span.closest('div[role="button"]');
             if (buttonWrapper) {
